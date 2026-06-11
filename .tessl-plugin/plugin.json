@@ -1,0 +1,11 @@
+{
+  "name": "jbaruch/skill-issue-policy",
+  "version": "0.1.0",
+  "description": "The codified ticket-handling policy from 'Skill Issue' — a skill, a script, and a rule packaged as one distributable context artifact.",
+  "skills": [
+    "skills/fix-the-ticket"
+  ],
+  "rules": [
+    "rules/tests-before-pr.md"
+  ]
+}
