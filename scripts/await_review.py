@@ -22,16 +22,23 @@ def gh_json(args: list[str]) -> Any:
 
 
 def request_copilot_review(repo: str, pr: int) -> None:
-    # GraphQL: requestReviews with the Copilot bot as a reviewer.
+    # REST requested_reviewers endpoint — the `gh pr edit --add-reviewer` GraphQL
+    # path cannot resolve the Copilot bot login, so POST it directly.
     subprocess.run(
-        ["gh", "pr", "edit", str(pr), "--repo", repo, "--add-reviewer", "copilot-pull-request-reviewer[bot]"],
+        ["gh", "api", "-X", "POST", f"repos/{repo}/pulls/{pr}/requested_reviewers",
+         "-f", "reviewers[]=copilot-pull-request-reviewer[bot]"],
         capture_output=True, text=True, check=False,  # idempotent; ignore "already requested"
     )
 
 
+def latest_state(reviews: list[dict]) -> str | None:
+    """The most recent review's state, or None if there are no reviews yet."""
+    return reviews[-1]["state"] if reviews else None
+
+
 def latest_review_state(repo: str, pr: int) -> str | None:
     reviews = gh_json(["pr", "view", str(pr), "--repo", repo, "--json", "reviews"]).get("reviews", [])
-    return reviews[-1]["state"] if reviews else None
+    return latest_state(reviews)
 
 
 def main() -> int:
