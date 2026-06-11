@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent follows the fix-the-ticket skill's four-step code-ticket workflow: implementing on a feature branch, satisfying the tests-before-pr rule before opening the PR, using the await_review.py script (not a hand-rolled polling loop) to summon and await a Copilot review, and handling the post-review resolution correctly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Feature branch used",
+      "description": "workflow_log.md shows the implementation was done on a named feature branch (not directly on main/master)",
+      "max_score": 8
+    },
+    {
+      "name": "Tests written or verified",
+      "description": "workflow_log.md records that tests were checked (or written) before the PR was opened — evidence of test commands being run",
+      "max_score": 12
+    },
+    {
+      "name": "Tests cover the change",
+      "description": "A test file exists (or is modified) that covers the zero-amount validation case — tests cover the specific bug being fixed",
+      "max_score": 10
+    },
+    {
+      "name": "PR opened via gh",
+      "description": "workflow_log.md contains a `gh pr create` command (or equivalent gh CLI call) used to open the pull request",
+      "max_score": 8
+    },
+    {
+      "name": "await_review.py script called",
+      "description": "workflow_log.md records a call to `scripts/await_review.py <pr-number>` to request and await the Copilot review",
+      "max_score": 20
+    },
+    {
+      "name": "No hand-rolled review polling",
+      "description": "workflow_log.md does NOT show a manually written polling loop or repeated gh/curl calls to check review status — the script is used instead",
+      "max_score": 12
+    },
+    {
+      "name": "Review comments addressed",
+      "description": "workflow_log.md describes reading the review and addressing every comment before merging",
+      "max_score": 10
+    },
+    {
+      "name": "await_review.py re-run after fixes",
+      "description": "workflow_log.md shows await_review.py was called a second time (or that the review was confirmed clean) before merging",
+      "max_score": 8
+    },
+    {
+      "name": "Merge conditional on clean review",
+      "description": "workflow_log.md shows the merge only happened after the review was clean — or explicitly states that the merge was not forced when the review did not clear",
+      "max_score": 7
+    },
+    {
+      "name": "Ordered steps",
+      "description": "workflow_log.md records steps in the correct order: implement → open PR → await review → resolve → merge (not out of order, e.g. PR opened before tests)",
+      "max_score": 5
+    }
+  ]
+}
