@@ -1,0 +1,14 @@
+{
+  "entries": {
+    "github/gh-aw-actions/setup@v0.80.4": {
+      "repo": "github/gh-aw-actions/setup",
+      "version": "v0.80.4",
+      "sha": "00c24a5774577e7282046aa2225105571a8f4195"
+    },
+    "tesslio/setup-tessl@v2": {
+      "repo": "tesslio/setup-tessl",
+      "version": "v2",
+      "sha": "25ec223fc0da33b41b8044ff5ab2b85235f4f91e"
+    }
+  }
+}
