@@ -41,6 +41,17 @@ def latest_review_state(repo: str, pr: int) -> str | None:
     return latest_state(reviews)
 
 
+def verdict_message(review_state: str | None) -> str:
+    """Human-readable one-liner for the latest review state."""
+    if review_state == "APPROVED":
+        return "✅ Review clean — safe to merge."
+    if review_state == "CHANGES_REQUESTED":
+        return "🛑 Changes requested — address every comment, then re-run."
+    if review_state == "COMMENTED":
+        return "💬 Reviewer left comments — read them before merging."
+    return "⏳ No review yet — still polling."
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("pr", type=int)
