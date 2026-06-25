@@ -4,7 +4,8 @@
   "description": "The codified ticket-handling policy from 'Skill Issue' — a skill, a script, and a rule packaged as one distributable context artifact.",
   "skills": [
     "skills/fix-the-ticket",
-    "skills/update-docs"
+    "skills/update-docs",
+    "skills/triage-issue"
   ],
   "rules": [
     "rules/tests-before-pr.md"

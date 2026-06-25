@@ -11,6 +11,7 @@ as one distributable context artifact.
 
 | Kind | Name | Does |
 |------|------|------|
+| Skill | `triage-issue` | Classifies an incoming ticket — bug / feature / docs / question — and routes it to the right lane before work starts. |
 | Skill | `fix-the-ticket` | The code-ticket lane: implement → PR → summon+await review → resolve → merge. Scoped so it doesn't fire on docs tickets. |
 | Script | `scripts/await_review.py` | Deterministic summon-Copilot-review + bounded poll (no token-burning model loop). |
 | Rule | `tests-before-pr` | Always-applied: no PR for a code change without tests. |
