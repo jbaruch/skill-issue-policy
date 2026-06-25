@@ -66,6 +66,7 @@ def main() -> int:
     while time.monotonic() < deadline:
         state = latest_review_state(repo, a.pr)
         if state:
+            print(verdict_message(state), file=sys.stderr)
             print(json.dumps({"pr": a.pr, "review_state": state, "timed_out": False}))
             return 0
         time.sleep(a.interval)
