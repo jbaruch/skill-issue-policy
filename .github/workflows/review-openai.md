@@ -6,7 +6,7 @@ description: |
   Pairs with `review-anthropic.md`; each workflow self-gates to skip PRs
   authored by its own family so the active reviewer is cross-family
   whenever the declaration permits — when the declaration spans both
-  paired families (e.g., `gpt-5.4 claude-opus-4-7`), or neither paired
+  paired families (e.g., `gpt-5.5 claude-opus-4-8`), or neither paired
   family (e.g., `gemini-2.5`, `human`-only), both reviewers run as the
   documented fallback. See `jbaruch/coding-policy: author-model-declaration`.
 
@@ -15,15 +15,25 @@ description: |
   from `main`. Fork PRs are skipped by gh-aw's fork-guard. Posts up to 10
   inline comments plus one consolidated review verdict.
 
-  Data flow / trust boundary: the reviewer sends the pull-request content
-  it evaluates — the diff, the PR title, body, and commit messages (read
-  for the author-model gate and the changed-file allowlist), and the
-  published policy files — to the review model (OpenAI here; Anthropic in
-  the paired workflow), the same provider whose model renders the verdict.
-  Repository secrets, tokens, and credentials are never included in that
-  payload. The `tessl install jbaruch/coding-policy` pre-step fetches a
-  public, version-pinned plugin from the official Tessl registry — a known
-  published ruleset, not arbitrary remote code.
+  Data flow / trust boundary: this workflow's review engine is
+  OpenAI; the paired workflow's is Anthropic. The engine the repository
+  owner configured reads the pull-request content it is asked to
+  evaluate as its ordinary inference input: the diff, the PR title,
+  body, and commit messages (the commit messages feed the author-model
+  gate), and the published policy rules it reviews against. Within this
+  workflow's run, PR content reaches no model provider other than its
+  configured engine; when the paired workflow also runs under the
+  documented fallback, it reads the same content with its own engine.
+  Repository secrets, tokens, and credentials are never part of the
+  model input.
+
+  The `tessl install jbaruch/coding-policy` pre-step fetches this
+  plugin's own published content from the official Tessl registry:
+  the policy rule set the reviewer evaluates against, plus
+  the helper scripts the gate job invokes (e.g., the author-family
+  resolver). It is the same `jbaruch/coding-policy` plugin that ships
+  this workflow, at its registry-published version rather than
+  unpublished working-tree content.
 
   Required repository secrets (set at
   https://github.com/<owner>/<repo>/settings/secrets/actions):
@@ -44,13 +54,93 @@ on:
     - "dependabot[bot]"
     - "renovate[bot]"
 
+# Runner-level self-review-bias gate (jbaruch/coding-policy#161). The
+# `gate` job below resolves the PR's author-family before the agent runs;
+# this `if:` skips the `agent` job — where the ~400K-token review spend
+# lives — when the author-family is openai (this reviewer's own family),
+# dropping the token cost to ~0. gh-aw composes the gate onto `agent`, so
+# the cheap pre_activation/activation framework setup still runs; the
+# token spend, not the seconds of slim-runner setup, is the target. The
+# in-agent Step 1 stays as the fallback for cases the gate deliberately
+# does not skip (a customized commit-attribution email or a
+# display-name-only trailer). The gate runs its own `tessl install`
+# because it is a separate job from the agent, so the published
+# `author-family-gate.sh` / `resolve-author-family.sh` are not yet on
+# disk when it runs.
+if: needs.gate.outputs.should_skip != 'true'
+
 permissions:
   contents: read
   pull-requests: read
 
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should_skip: ${{ steps.decide.outputs.should_skip }}
+    steps:
+      # continue-on-error keeps a Tessl setup/registry outage from FAILING
+      # the gate job — a failed gate job cascade-skips the agent (needs:
+      # gate) and silently drops the review. On failure the plugin is
+      # simply absent, so `decide` below can't find the gate script and
+      # defaults should_skip=false (agent runs). Fail-open end-to-end.
+      - name: Install Tessl CLI
+        uses: tesslio/setup-tessl@v2
+        continue-on-error: true
+        with:
+          token: ${{ secrets.TESSL_TOKEN }}
+      - name: Install jbaruch/coding-policy (latest published)
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/gh-aw/coding-policy
+          cd /tmp/gh-aw/coding-policy
+          tessl install jbaruch/coding-policy --yes
+      - id: decide
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          # No actions/checkout in this job — without a git context `gh pr
+          # view` cannot infer the repo and fails on every run, silently
+          # reducing the gate to body-only (trailer-only PRs never skip).
+          # GH_REPO supplies the repo context explicitly.
+          GH_REPO: ${{ github.repository }}
+        # Fails OPEN: a failed gate job would cascade-skip the agent and
+        # silently drop the review, so any trouble here defaults
+        # should_skip=false and lets the agent run. The setup/install steps
+        # above are continue-on-error, so a Tessl outage lands here as a
+        # missing gate script → the `if` below fails → should_skip=false.
+        # Explicit `if` checks (never silent suppression) keep exit at 0.
+        run: |
+          set -uo pipefail
+          GATE=/tmp/gh-aw/coding-policy/.tessl/plugins/jbaruch/coding-policy/skills/install-reviewer/author-family-gate.sh
+          commits="$(mktemp)"
+          if ! gh pr view "$PR_NUMBER" --json commits -q '.commits[].messageBody' > "$commits"; then
+            echo "author-family gate: 'gh pr view' failed; proceeding body-only" >&2
+            : > "$commits"
+          fi
+          skip=false
+          if out="$(printf '%s' "$PR_BODY" | bash "$GATE" --reviewer openai --policy-ref 'jbaruch/coding-policy: author-model-declaration' --commits-file "$commits")"; then
+            echo "author-family gate: $out" >&2
+            case "$(printf '%s' "$out" | jq -r .should_skip)" in true) skip=true ;; esac
+          else
+            echo "author-family gate: script errored; defaulting should_skip=false (agent will run)" >&2
+          fi
+          echo "should_skip=$skip" >> "$GITHUB_OUTPUT"
+
 engine:
   id: codex
-  model: gpt-5.4
+  # Model pin renewal (see `jbaruch/coding-policy: dependency-management`,
+  # Freshness): no scanner tracks gh-aw `engine.model` pins. Check OpenAI's
+  # current Codex model and bump this pin at every reviewer-template change,
+  # at least quarterly. Verify the Codex CLI version pinned in the compiled
+  # lock file recognizes the new ID before shipping — the CLI silently remaps
+  # unknown model IDs to an older model (codex 0.118.0 ran `gpt-5.4` as
+  # `gpt-5.3-codex` with no error).
+  model: gpt-5.5
   env:
     # gh-aw's compiled validation step accepts EITHER CODEX_API_KEY or
     # OPENAI_API_KEY as the credential, but the Codex CLI / API-proxy
