@@ -1,76 +1,57 @@
 ---
+license: MIT
 name: fix-the-ticket
-description: Use this when handling a CODE ticket (a bug or feature in application source) that should go through the review-and-merge flow. Do NOT use for docs-only tickets, or for context-artifact changes.
+description: Handle application CODE tickets: bugs and features that need implementation, tests, and a reviewed pull request. Use for changes to application behavior. For documentation-only tasks use update-docs instead. Context-artifact authoring is outside this skill.
 ---
 
-# Fix The Ticket (code path)
+# Fix the ticket
 
-Process steps in order. This skill owns ONE lane — code tickets that need a
-reviewed PR. Docs-only and context-artifact tickets are out of scope; let the
-agent handle those directly.
+This skill owns application code changes. A documentation-only ticket belongs to
+`update-docs`, including a README quickstart. Respect the user's requested scope:
+planning a workflow never authorizes creating or merging a real PR.
 
-## Step 1 — Implement
+## Implement and test
 
-Create a feature branch and make the code change for the ticket. Keep it focused.
+Use a feature branch. Reproduce the bug with a failing test, implement the change,
+and run the relevant tests. The always-loaded `tests-before-pr` rule supplies
+policy; loading prose does not itself enforce it. Write down the test result.
 
-```bash
-git checkout -b fix/<ticket-id>
-# implement the change
-git add -p
-git commit -m "<ticket-id>: <short description>"
-git push -u origin fix/<ticket-id>
+## Open a PR when authorized
+
+Open the PR only when the task authorizes it and tests pass. Resolve the target
+repository explicitly; do not infer it from this skill's installation location.
+
+## Request and await review
+
+Resolve `skill_dir` from the absolute path of the **loaded SKILL.md**, not the
+consumer working directory. The helper and fixture are inside that directory,
+so the lookup works from both this source tree and an ACR installation.
+
+Run the companion with Python 3.11 or newer:
+
+```text
+python3 <skill_dir>/scripts/await_review.py <pr-number> --repo <owner/repository>
 ```
 
-## Step 2 — Open the PR
+Its module docstring and `--help` own the CLI contract. Exit 0 means a new review
+by the requested reviewer arrived for the captured PR head. Read its JSON,
+including body, state, review id and head SHA. It never authorizes a merge.
+On a nonzero exit, report the error and stop; do not replace it with a model
+polling loop. A changed head needs a new invocation against that head.
 
-Open a pull request. The `tests-before-pr` rule (always applied) will block this
-if the project has no tests — satisfy it first; do not work around it.
+For workshop practice only, use the bundled synthetic fixture:
 
-```bash
-gh pr create --title "<ticket-id>: <short description>" --body "Closes #<ticket-id>"
+```text
+python3 <skill_dir>/scripts/await_review.py 7 --repo workshop/brickbox --fixture <skill_dir>/fixtures/review.json --interval 0.01
 ```
 
-## Step 3 — Summon + await review (deterministic → script)
+Fixture mode cannot contact GitHub and is not evidence of a real review.
 
-Run `scripts/await_review.py <pr-number>`. The script lives at `scripts/await_review.py`
-in the repository root. It requests a Copilot review via the GitHub GraphQL API, then
-polls on a fixed interval until the review posts or the timeout elapses. This is
-deterministic work — never hand-roll the summon/poll in the model; call the script so
-it costs the same (cheap) every time.
+## Resolve feedback and verify merge readiness
 
-Expected interface:
-- **Argument**: PR number (integer)
-- **Exit 0**: review received and written to stdout
-- **Exit 1**: timeout elapsed or API error — message on stderr
-- **Output**: review body text, suitable for reading in Step 4
-
-If the script exits non-zero, report the error and stop — do not attempt to poll
-manually.
-
-## Step 4 — Resolve + merge
-
-Read the review. Address every comment, push fixes, and re-run Step 3. When the
-review is clean, merge. If the review never clears, stop and report — do not
-force the merge.
-
-```bash
-# For each round of reviewer fixes:
-git add -p
-git commit -m "<ticket-id>: address review comments"
-git push
-# Then re-run Step 3:
-python scripts/await_review.py <pr-number>
-
-# Once the review is clean:
-gh pr merge <pr-number> --squash --delete-branch
-```
-
-If a fix is small enough to amend the previous commit instead of adding a new one,
-use `git commit --amend && git push --force-with-lease` — but only when the branch
-has no other collaborators.
-
-## References
-
-- **`tests-before-pr` rule** — defines the test-coverage gate that must pass before `gh pr create` is allowed; consult the project's rule definitions for thresholds and override policy.
-- **`scripts/await_review.py`** — located at the repository root; review its module-level docstring or `--help` output for configurable options such as poll interval and timeout duration.
-- **"Clean" review** — a review is considered clean when the script returns exit 0 and the review body contains no unresolved change-request comments. When in doubt, check the PR's review status on GitHub before merging.
+Read the review and inline threads; a COMMENTED review may still contain blocking
+feedback. Address feedback, run tests, push only when authorized, then request a
+new review for the new commit. Before any authorized merge, freshly verify the
+current head, required reviews, unresolved threads, CI, and branch protection.
+Do not equate review receipt, exit 0, or a green workflow with merge permission.
+Stop when a required gate is unresolved. Workshop exercises never merge real PRs.

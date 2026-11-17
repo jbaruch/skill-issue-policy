@@ -2,24 +2,15 @@
 alwaysApply: true
 ---
 
-# Tests Before PR
+# Tests before a code PR
 
-## The Rule
+Before opening a PR that changes application behavior, add or verify meaningful
+tests covering that behavior and run them. Record the result. An old passing
+run or the mere existence of a test file is insufficient.
 
-- Never open a pull request for a code change unless the project has tests that
-  cover the change. No tests, no PR.
-- This is mandatory, not advisory — it always applies, regardless of whether a
-  skill happened to mention it.
+If verification cannot run, report the concrete limitation and leave the PR gate
+unsatisfied. Respect the user's scope: a planning exercise does not authorize
+external changes. Documentation follows the repository's contribution policy.
 
-## Why
-
-- Catching "there are no tests" at PR time means a wasted review round-trip
-  (and Copilot tokens) to discover something a rule can enforce up front.
-- Shift it left: the rule blocks the PR locally, before any reviewer is summoned.
-
-## How to Apply
-
-- Before `gh pr create` for a code ticket, verify tests exist and pass for the
-  changed code. If they don't, write them first.
-- If the change is genuinely untestable (config, generated files), say so in the
-  PR body so the reviewer doesn't flag the absence.
+This is always-loaded guidance, not a runtime access control. Hooks and required
+server-side checks enforce the specific constraints they actually inspect.

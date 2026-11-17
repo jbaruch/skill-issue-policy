@@ -1,0 +1,28 @@
+schemaVersion: 1
+name: jbaruch/skill-issue-policy
+version: 0.2.0
+description: Workshop ticket policy with bounded, commit-specific review waiting.
+source:
+  repository: https://github.com/jbaruch/skill-issue-policy
+artifacts:
+  rules:
+    - id: tests-before-pr
+      path: rules/tests-before-pr.md
+      activation:
+        mode: always
+    - id: evals-required
+      path: rules/evals-required.md
+      activation:
+        mode: always
+  skills:
+    - id: fix-the-ticket
+      path: skills/fix-the-ticket
+    - id: update-docs
+      path: skills/update-docs
+  hooks:
+    - id: record-skill
+      event: post-tool-use
+      path: hooks/record_skill.py
+    - id: sandbox-publishing-only
+      event: pre-tool-use
+      path: hooks/sandbox_publishing_only.py
