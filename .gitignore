@@ -27,3 +27,5 @@ __pycache__/
 .vscode/mcp.json
 .vscode/skills/tessl__*
 # === end Tessl-generated artifacts ===
+eval-results/
+.workshop/
