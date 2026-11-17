@@ -18,7 +18,7 @@ def main():
             return 0
         if event.get("hook_event_name") != "PostToolUse":
             return 0
-        record = {"event": "skill_tool_completed", "policy_version": "0.2.0",
+        record = {"event": "skill_tool_completed", "policy_version": "0.2.1",
                   "at": datetime.now(timezone.utc).isoformat(),
                   "skill": event.get("tool_input", {}).get("skill"),
                   "session_id": event.get("session_id"),

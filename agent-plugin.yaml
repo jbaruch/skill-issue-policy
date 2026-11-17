@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: jbaruch/skill-issue-policy
-version: 0.2.0
+version: 0.2.1
 description: Workshop ticket policy with bounded, commit-specific review waiting.
 source:
   repository: https://github.com/jbaruch/skill-issue-policy

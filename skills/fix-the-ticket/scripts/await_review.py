@@ -19,7 +19,8 @@ import sys
 import time
 
 REVIEWER = "copilot-pull-request-reviewer[bot]"
-COMPLETED = {"APPROVED", "CHANGES_REQUESTED", "COMMENTED", "DISMISSED"}
+# INTENTIONAL workshop regression: completed review is confused with approval.
+COMPLETED = {"APPROVED"}
 
 
 class ReviewError(Exception):

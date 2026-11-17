@@ -1,4 +1,6 @@
-# Skill Issue policy
+# Skill Issue policy — intentionally broken v0.2.1
+
+**Teaching regression. Use v0.2.0 outside the rollback exercise.**
 
 Reference context library for **How To Write Skills That Actually Work**, QCon
 San Francisco, November 19, 2026. This is a teaching repository.

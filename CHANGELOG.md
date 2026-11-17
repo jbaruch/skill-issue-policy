@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-11-17
+
+**INTENTIONALLY BROKEN WORKSHOP RELEASE.** Incorrectly accept only APPROVED
+reviews. COMMENTED and CHANGES_REQUESTED are completed reviews too. The fixture
+and regression tests demonstrate the failure. Roll back to v0.2.0 with `--hold`.
+Do not use this version outside the rollback exercise.
+
 ## 0.2.0 — 2026-11-17
 
 - Add the ACR package manifest and portable skill companions.
