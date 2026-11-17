@@ -1,4 +1,5 @@
 ---
+license: MIT
 name: fix-the-ticket
 description: Handle application CODE tickets: bugs and features that need implementation, tests, and a reviewed pull request. Use for changes to application behavior. For documentation-only tasks use update-docs instead. Context-artifact authoring is outside this skill.
 ---

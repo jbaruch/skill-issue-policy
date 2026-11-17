@@ -83,6 +83,9 @@ def main():
     args = parser.parse_args()
     if args.trials < 1 or args.budget <= 0 or args.timeout < 1:
         parser.error('trials, budget and timeout must be positive')
+    args.starter = args.starter.expanduser().resolve()
+    if 'bad' in args.cells and not (args.starter / '.claude/skills/fix-the-ticket').is_dir():
+        parser.error('bad cell requires --starter pointing to an intact original starter clone; no model calls made')
     if args.dry_run:
         print(json.dumps({'calls': len(args.cells) * len(args.scenarios) * args.trials,
                           'scope': 'injected-context planning', 'model': args.model,
@@ -101,7 +104,16 @@ def main():
             for cell in cells:
                 with tempfile.TemporaryDirectory(prefix='qcon-skill-eval-') as tmp:
                     work = Path(tmp)
-                    prepare(work, cell, args.starter.resolve())
+                    try:
+                        prepare(work, cell, args.starter)
+                    except (OSError, ValueError) as exc:
+                        row = {'scenario': scenario, 'cell': cell, 'trial': trial,
+                               'status': 'setup_error', 'error': str(exc)}
+                        rows.append(row)
+                        with (run_dir / 'results.jsonl').open('a') as stream:
+                            stream.write(json.dumps(row) + '\n')
+                        print(json.dumps(row), flush=True)
+                        continue
                     context = '\n\n'.join('Context file: ' + str(p) + '\n' + p.read_text()
                         for p in sorted((work / '.context').rglob('*.md')))
                     system = SYSTEM + ('\n\nUse relevant guidance below.\n' + context if context else '')

@@ -1,4 +1,5 @@
 ---
+license: MIT
 name: update-docs
 description: Handle documentation-only tasks such as README quickstarts, guides, FAQs, and prose or comment edits that do not change application behavior. Use for new documentation sections too. Application code bugs and features belong to fix-the-ticket.
 ---

@@ -15,7 +15,7 @@ Python 3.11+ is needed for companions and hooks. Live GitHub review additionally
 requires authenticated `gh`, reviewer availability and repository permissions.
 
 ```sh
-acr install github:jbaruch/skill-issue-policy@v0.1.6 --agent claude-code --freshness none --non-interactive
+acr install github:jbaruch/skill-issue-policy@v0.2.0 --agent claude-code --freshness none --non-interactive
 acr realize
 acr check
 ```
@@ -69,11 +69,11 @@ Model experiments and their measurement limits are documented in [evals](evals/R
 
 ## Rollback exercise
 
-`v0.1.6` is the known-good baseline. `v0.1.7` is an **intentional workshop
+`v0.2.0` is the known-good baseline. `v0.2.1` is an **intentional workshop
 regression**, not a recommended update. It incorrectly waits only for APPROVED
 reviews and therefore times out on the bundled COMMENTED-review fixture.
 The release must be clearly labelled as a teaching failure. Keep ordinary
-consumers pinned to `v0.1.6` during the exercise.
+consumers pinned to `v0.2.0` during the exercise.
 
 In a disposable packaging clone, after both releases are published:
 
@@ -82,7 +82,7 @@ acr install github:jbaruch/skill-issue-policy --agent claude-code --freshness no
 acr realize
 python3 .claude/skills/acr__jbaruch__skill-issue-policy__fix-the-ticket/scripts/await_review.py 7 --repo workshop/brickbox --fixture .claude/skills/acr__jbaruch__skill-issue-policy__fix-the-ticket/fixtures/review.json --interval 0.01 --timeout 0.2
 # Expected nonzero: the latest teaching release ignores a completed COMMENTED review.
-acr install github:jbaruch/skill-issue-policy@v0.1.6 --hold
+acr install github:jbaruch/skill-issue-policy@v0.2.0 --hold
 acr realize
 acr check
 # Repeat the same companion command: expected success, review_id=12.

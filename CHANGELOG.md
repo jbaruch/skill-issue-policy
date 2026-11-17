@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.6 — 2026-11-17
+## 0.2.0 — 2026-11-17
 
 - Add the ACR package manifest and portable skill companions.
 - Request and await a fresh review by the selected reviewer on the current head.
