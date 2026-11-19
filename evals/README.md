@@ -1,6 +1,6 @@
 # Compare plans with and without the policy
 
-The workshop uses the saved comparison. To rerun it with Claude Code, use
+The workshop uses the [saved comparison](https://github.com/jbaruch/skill-issue-brickbox-start/blob/main/EVIDENCE.md#3-score-the-plans). To rerun it with Claude Code, use
 the reference checkout with Python 3.11 or later. Sign
 in to Claude Code first and replace `MODEL_ID` with a model your account can
 use. The bad group reads the original skill from
@@ -34,6 +34,7 @@ number of completed runs and errors. The saved docs baseline passed every trial,
 so that check showed no improvement. Three runs per cell give you examples to
 inspect and limited evidence about future runs.
 
-Read `scenario-0/task.md` in the prompt leakage exercise. The task gives the
-agent the helper and sequence the grader expects. Use it to find the leaked
-answer, then use `run.py` for the comparison.
+Read `scenario-0/task.md` alongside its `criteria.json`. The task gives away
+workflow steps and asks for a plan. Several old criteria ask for evidence
+of commands being run. Use the pair to separate prompt leakage from an
+unobservable grading criterion.

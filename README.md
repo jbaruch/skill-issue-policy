@@ -73,27 +73,14 @@ Use v0.2.1 only for the rollback exercise. Its review helper waits for
 `APPROVED` and times out on the bundled `COMMENTED` review. Use v0.2.0 for
 ordinary installs.
 
-Run these commands in a disposable packaging clone. The unversioned install
-selects the workshop's Latest release.
+Run this in the starter's disposable `brickbox-package` clone. Use the
+[workbook command blocks](https://github.com/jbaruch/skill-issue-brickbox-start/blob/main/WORKBOOK.md#6-verify-and-roll-back)
+for your adapter. They run the same installed review fixture three times:
+on Latest, on held v0.2.0 and after update. The first run must report the
+review timeout. A missing helper or fixture is a dependency error, so
+check the adapter and run `acr realize` before trying again.
 
-```sh
-agent=codex
-skill_root=.codex/skills      # claude-code uses .claude/skills; cursor uses .cursor/skills
-skill="$skill_root/acr__jbaruch__skill-issue-policy__fix-the-ticket"
-acr install github:jbaruch/skill-issue-policy --agent "$agent" --freshness none --non-interactive
-acr realize
-python3 "$skill/scripts/await_review.py" 7 --repo workshop/brickbox --fixture "$skill/fixtures/review.json" --interval 0.01 --timeout 0.2
-# Expected nonzero: the latest teaching release ignores a completed COMMENTED review.
-acr install github:jbaruch/skill-issue-policy@v0.2.0 --hold
-acr realize
-acr check
-# Repeat the same companion command: expected success, review_id=12.
-acr update
-acr realize
-# Repeat again: the hold must keep the known-good behavior.
-```
-
-Read `agents.yaml` and `.agents/registry.lock`; record tag, commit, content hash
+Use `acr list --json` to record the locked tag, commit, content hash
 and hold. `acr resume github:jbaruch/skill-issue-policy` explicitly removes the
 hold and follows latest again. While latest is deliberately broken, resuming
 reintroduces the failure. For the lab, leave the clone held on v0.2.0. After any version switch, run
